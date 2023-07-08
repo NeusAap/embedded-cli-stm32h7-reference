@@ -1,5 +1,6 @@
 # embedded-cli-stm32h7-reference
-A fully implemented, ready to build reference project.
+A fully implemented, ready to build reference project for funbiscuits embedded-cli project, using a `STM32H750IBK6`.
+https://github.com/funbiscuit/embedded-cli
 
 # How to use
 The easiest way to use this example project, is to clone this repository (or download the .zip file, and extract its contents).
