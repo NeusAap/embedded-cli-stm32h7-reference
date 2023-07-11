@@ -19,6 +19,11 @@
 #include "cli_setup.h"
 #include "cli_binding.h"
 
+// Expand cli implementation here (must be in one file only)
+#define EMBEDDED_CLI_IMPL
+
+#include "embedded_cli.h"
+
 // UART buffers
 static uint8_t UART_CLI_rxBuffer[UART_RX_BUFF_SIZE] = {0};
 // CLI buffer
@@ -29,15 +34,15 @@ static CLI_UINT cliBuffer[BYTES_TO_CLI_UINTS(CLI_BUFFER_SIZE)];
 static bool cliIsReady = false;
 
 // Write function used in 'setupCli()' to route the chars over UART.
-static void writeCharToCli(EmbeddedCli *embeddedCli, char c){
+static void writeCharToCli(EmbeddedCli *embeddedCli, char c) {
     uint8_t c_to_send = c;
     HAL_UART_Transmit(UART_CLI_PERIPH, &c_to_send, 1, 100);
 }
 
 // Function to setup the configuration settings for the CLI, based on the definitions from this header file
-void setupCli(){
+void setupCli() {
     // UART interrupt
-    HAL_UART_Receive_IT (UART_CLI_PERIPH, UART_CLI_rxBuffer, UART_RX_BUFF_SIZE);
+    HAL_UART_Receive_IT(UART_CLI_PERIPH, UART_CLI_rxBuffer, UART_RX_BUFF_SIZE);
 
     // Initialize the CLI configuration settings
     EmbeddedCliConfig *config = embeddedCliDefaultConfig();
@@ -59,7 +64,7 @@ void setupCli(){
     // You can get required buffer size by calling
     // uint16_t requiredSize = embeddedCliRequiredSize(config);
     // Then check it's value in debugger
-    while (cli == NULL){
+    while (cli == NULL) {
         HardFault_Handler();
     }
 
@@ -77,9 +82,8 @@ void setupCli(){
 }
 
 // STM32 UART callback function, to pass received characters to the embedded-cli
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-    if (huart == UART_CLI_PERIPH && cliIsReady){
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+    if (huart == UART_CLI_PERIPH && cliIsReady) {
         HAL_UART_Receive_IT(UART_CLI_PERIPH, UART_CLI_rxBuffer, UART_RX_BUFF_SIZE);
         char c = UART_CLI_rxBuffer[0];
         embeddedCliReceiveChar(cli, c);
@@ -88,8 +92,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 // Function to encapsulate the 'embeddedCliPrint()' call with print formatting arguments (act like printf(), but keeps cursor at correct location).
 // The 'embeddedCliPrint()' function does already add a linebreak ('\r\n') to the end of the print statement, so no need to add it yourself.
-void cli_printf(EmbeddedCli *cli, const char *format, ...)
-{
+void cli_printf(const char *format, ...) {
     // Create a buffer to store the formatted string
     char buffer[CLI_PRINT_BUFFER_SIZE];
 
@@ -100,17 +103,11 @@ void cli_printf(EmbeddedCli *cli, const char *format, ...)
     va_end(args);
 
     // Check if string fitted in buffer else print error to stderr
-    if (length < 0)
-    {
+    if (length < 0) {
         fprintf(stderr, "Error formatting the string\r\n");
         return;
     }
 
     // Call embeddedCliPrint with the formatted string
-    embeddedCliPrint(cli, buffer);
-}
-
-// Getter function, to keep only one instance of the EmbeddedCli pointer in this file.
-EmbeddedCli* getCliPointer(){
-    return cli;
+    embeddedCliPrint(getCliPointer(), buffer);
 }
